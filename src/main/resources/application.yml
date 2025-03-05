@@ -1,0 +1,20 @@
+server:
+  port: 62000
+  servlet:
+    context-path: /qrcodeservices
+
+spring:
+  application:
+    name: QRCODE-ENGINE
+
+  # Database Configuration
+  datasource:
+    url: jdbc:oracle:thin:@copkdnas-c8-scan:1528/QRCODE
+    username: QR
+    password: Ic$#120H40MxsUcPvINZVIJQ
+    driver-class-name: oracle.jdbc.OracleDriver
+    hikari:
+      auto-commit: true
+      maximum-pool-size: 10
+  jpa:
+    database-platform: org.hibernate.dialect.OracleDialect
