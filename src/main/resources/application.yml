@@ -18,3 +18,10 @@ spring:
       maximum-pool-size: 10
   jpa:
     database-platform: org.hibernate.dialect.OracleDialect
+    hibernate:
+      ddl-auto: validate
+
+qr:
+  config:
+    keqr-subdomain: ke.go.qr
+

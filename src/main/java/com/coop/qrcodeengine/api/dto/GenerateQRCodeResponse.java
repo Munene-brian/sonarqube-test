@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GenerateQRCodeResponse {
-    private String qrCodeImage; // Base64 encoded WebP
-    private String format; // "WEBP"
-    private int size; // 512 (Mobile)
+    private String qrCodeImage; // Base64 encoded PNG
+    private String format; // "PNG"
+    private int size; // 512 (Mobile), 1024 (Web)
 }

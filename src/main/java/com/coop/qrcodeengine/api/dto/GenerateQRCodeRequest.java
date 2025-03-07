@@ -8,5 +8,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GenerateQRCodeRequest {
-    private String qrCode;
+    // TODO: Make this use a hashmap to make it extensible
+    String merchantName;
+    String merchantCity;
+    String postalCode;
+    String merchantAccountInformation;
+    String merchantCategoryCode;
 }
