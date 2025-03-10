@@ -58,7 +58,7 @@ public class QrCodeServiceImpl implements QrCodeService {
             // 4️⃣ Generate QR Code Image
             String format = "PNG";
             int size = 512;
-            byte[] qrImage = QrCodeGenerator.generateQRCodeImage(qrData, size, size, format);
+            byte[] qrImage = QrCodeGenerator.generateStyledQRCode(qrData, format);
             String base64Qr = Base64.getEncoder().encodeToString(qrImage);
 
             // 5️⃣ Save QR Code Details
