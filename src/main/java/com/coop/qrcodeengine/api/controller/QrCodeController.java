@@ -27,4 +27,9 @@ public class QrCodeController {
         GenerateQRCodeResponse response = qrCodeService.generateStaticQrCode(qrCodeRequest);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping(value = "v1.0/qrcode/generate-dynamic", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<GenerateQRCodeResponse> generateDynamicQr(@RequestBody GenerateQRCodeRequest request) throws Exception {
+        return ResponseEntity.ok(qrCodeService.generateDynamicQrCode(request));
+    }
 }

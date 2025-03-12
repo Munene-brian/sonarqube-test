@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class QrCodeGenerator {
-    private static final int QR_SIZE = 512;
+    private static final int QR_SIZE = 400;
     private static final int QUIET_ZONE = 4;
     private static final int FINDER_PATTERN_SIZE = 7;
 

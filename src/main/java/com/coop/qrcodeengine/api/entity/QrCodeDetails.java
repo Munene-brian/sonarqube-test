@@ -6,6 +6,7 @@ import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.Nationalized;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 @Data
@@ -75,8 +76,8 @@ public class QrCodeDetails {
     @Column(name = "TRANSACTIONCURRENCY", length = 10)
     private String transactionCurrency;
 
-    @Column(name = "TRANSACTIONAMOUNT")
-    private Long transactionAmount;
+    @Column(name = "TRANSACTIONAMOUNT", precision = 18, scale = 2)
+    private BigDecimal transactionAmount;
 
     @Column(name = "CONVINIENCEINDICATOR")
     private Long convinienceIndicator;
