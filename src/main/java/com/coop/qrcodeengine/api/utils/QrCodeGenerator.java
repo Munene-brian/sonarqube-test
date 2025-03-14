@@ -19,7 +19,8 @@ import java.util.Map;
 
 public class QrCodeGenerator {
     private static final int QR_SIZE = 400;
-    private static final int QUIET_ZONE = 4;
+    private static final double QUIET_ZONE = 2.9;
+    //private static final int QUIET_ZONE = 4;
     private static final int FINDER_PATTERN_SIZE = 7;
 
     private static final Color DARK_GREEN = new Color(0x00513B);
@@ -33,7 +34,8 @@ public class QrCodeGenerator {
 
             // Encode QR Code using ZXing
             Map<EncodeHintType, Object> hints = new HashMap<>();
-            hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
+            hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.Q);
+//            hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
             hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
 
             QRCode qrCode = Encoder.encode(data, ErrorCorrectionLevel.H, hints);
@@ -54,6 +56,8 @@ public class QrCodeGenerator {
         BufferedImage image = new BufferedImage(QrCodeGenerator.QR_SIZE, QrCodeGenerator.QR_SIZE, BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = image.createGraphics();
 
+        graphics.setColor(LIGHT_GREEN);
+        graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
         graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         graphics.setBackground(Color.white);
         graphics.clearRect(0, 0, QrCodeGenerator.QR_SIZE, QrCodeGenerator.QR_SIZE);
@@ -65,8 +69,8 @@ public class QrCodeGenerator {
 
         int inputWidth = input.getWidth();
         int inputHeight = input.getHeight();
-        int qrWidth = inputWidth + (QrCodeGenerator.QUIET_ZONE * 2);
-        int qrHeight = inputHeight + (QrCodeGenerator.QUIET_ZONE * 2);
+        int qrWidth = (int) (inputWidth + (QrCodeGenerator.QUIET_ZONE * 2));
+        int qrHeight = (int) (inputHeight + (QrCodeGenerator.QUIET_ZONE * 2));
         int multiple = Math.min(QrCodeGenerator.QR_SIZE / qrWidth, QrCodeGenerator.QR_SIZE / qrHeight);
         int leftPadding = (QrCodeGenerator.QR_SIZE - (inputWidth * multiple)) / 2;
         int topPadding = (QrCodeGenerator.QR_SIZE - (inputHeight * multiple)) / 2;
@@ -75,7 +79,8 @@ public class QrCodeGenerator {
         for (int inputY = 0, outputY = topPadding; inputY < inputHeight; inputY++, outputY += multiple) {
             for (int inputX = 0, outputX = leftPadding; inputX < inputWidth; inputX++, outputX += multiple) {
                 if (input.get(inputX, inputY) == 1) {
-                    graphics.fillRect(outputX, outputY, multiple, multiple);
+                    graphics.fillRoundRect(outputX, outputY, multiple, multiple, multiple / 5, multiple / 5);
+//                    graphics.fillRect(outputX, outputY, multiple, multiple);
                 }
             }
         }
@@ -152,19 +157,53 @@ public class QrCodeGenerator {
         final int INNER_SQUARE_OFFSET = size / 7;
         final int CENTER_SQUARE_SIZE = size * 3 / 7;
         final int CENTER_SQUARE_OFFSET = size * 2 / 7;
-        final int ROUNDED_CORNER_ARC = size / 4;
+        final int ROUNDED_CORNER_ARC = (int) (size / 1.5); // Ensure consistent rounding
+        final int INNER_CORNER_ARC = size / 4;
+        final int BORDER_SIZE = size / 20; // Thin border
 
-        // Clear the background around the finder pattern before drawing
+        // Clear the background before drawing
         graphics.setColor(Color.WHITE);
-        graphics.fillRect(x, y, size, size); // Ensures no background interference
+        graphics.fillRect(x, y, size, size);
 
+        // Outer dark green rounded square
         graphics.setColor(DARK_GREEN);
-        graphics.fillRoundRect(x, y, size, size, ROUNDED_CORNER_ARC, ROUNDED_CORNER_ARC);
-        graphics.setColor(Color.white);
-        graphics.fillRoundRect(x + INNER_SQUARE_OFFSET, y + INNER_SQUARE_OFFSET, INNER_SQUARE_SIZE, INNER_SQUARE_SIZE, ROUNDED_CORNER_ARC, ROUNDED_CORNER_ARC);
+        graphics.fillRoundRect(x + BORDER_SIZE, y + BORDER_SIZE, size - 2 * BORDER_SIZE, size - 2 * BORDER_SIZE, ROUNDED_CORNER_ARC, ROUNDED_CORNER_ARC);
+
+
+        // Middle white rounded square
+        graphics.setColor(Color.WHITE);
+        graphics.fillRoundRect(
+                x + INNER_SQUARE_OFFSET, y + INNER_SQUARE_OFFSET,
+                INNER_SQUARE_SIZE, INNER_SQUARE_SIZE,
+                ROUNDED_CORNER_ARC, ROUNDED_CORNER_ARC
+        );
+
+        // Inner dark green rounded square (center)
         graphics.setColor(DARK_GREEN);
-        graphics.fillRoundRect(x + CENTER_SQUARE_OFFSET, y + CENTER_SQUARE_OFFSET, CENTER_SQUARE_SIZE, CENTER_SQUARE_SIZE, ROUNDED_CORNER_ARC, ROUNDED_CORNER_ARC);
+        graphics.fillRoundRect(x + CENTER_SQUARE_OFFSET, y + CENTER_SQUARE_OFFSET, CENTER_SQUARE_SIZE, CENTER_SQUARE_SIZE, INNER_CORNER_ARC, INNER_CORNER_ARC);
     }
+
+
+//    private static void drawFinderPattern(Graphics2D graphics, int x, int y, int size) {
+//        final int INNER_SQUARE_SIZE = size * 5 / 7;
+//        final int INNER_SQUARE_OFFSET = size / 7;
+//        final int CENTER_SQUARE_SIZE = size * 3 / 7;
+//        final int CENTER_SQUARE_OFFSET = size * 2 / 7;
+//        final int ROUNDED_CORNER_ARC = size / 4;
+//
+//        // Clear the background around the finder pattern before drawing
+//        graphics.setColor(Color.WHITE);
+//        graphics.fillRect(x, y, size, size); // Ensures no background interference
+//
+//        graphics.setColor(DARK_GREEN);
+//        graphics.fillRoundRect(x, y, size, size, (int) (size / 1.5), (int) (size / 1.5));
+////        graphics.fillRoundRect(x, y, size, size, size / 3, size / 3);
+////        graphics.fillRoundRect(x, y, size, size, ROUNDED_CORNER_ARC, ROUNDED_CORNER_ARC);
+//        graphics.setColor(Color.white);
+//        graphics.fillRoundRect(x + INNER_SQUARE_OFFSET, y + INNER_SQUARE_OFFSET, INNER_SQUARE_SIZE, INNER_SQUARE_SIZE, ROUNDED_CORNER_ARC, ROUNDED_CORNER_ARC);
+//        graphics.setColor(DARK_GREEN);
+//        graphics.fillRoundRect(x + CENTER_SQUARE_OFFSET, y + CENTER_SQUARE_OFFSET, CENTER_SQUARE_SIZE, CENTER_SQUARE_SIZE, ROUNDED_CORNER_ARC, ROUNDED_CORNER_ARC);
+//    }
 
     private static void overlayLogo(BufferedImage qrImage) throws IOException {
         InputStream logoStream = new ClassPathResource("templates/logo.png").getInputStream();
@@ -180,7 +219,7 @@ public class QrCodeGenerator {
         g2d.drawImage(logo, 0, 0, logo.getWidth(), logo.getHeight(), null);
         g2d.dispose();
 
-        int logoSize = qrImage.getWidth() / 7; // Scale logo dynamically
+        int logoSize = qrImage.getWidth() / 6; // Scale logo dynamically
         int logoX = (qrImage.getWidth() - logoSize) / 2;
         int logoY = (qrImage.getHeight() - logoSize) / 2;
 
@@ -190,7 +229,7 @@ public class QrCodeGenerator {
         g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 
         // Clear a small white background area for the logo
-        int padding = logoSize / 10; // Adjust for cleaner spacing
+        int padding = logoSize / 8; // Adjust for cleaner spacing
         g.setColor(Color.WHITE);
         g.fillRoundRect(logoX - padding, logoY - padding, logoSize + (2 * padding), logoSize + (2 * padding), 20, 20);
 

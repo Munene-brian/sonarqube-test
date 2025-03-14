@@ -16,16 +16,16 @@ public class GenerateQRCodeRequest {
     private String channelId;
     private Map<String, Object> qrData; // Flexible structure for static/dynamic QRs
 
-    public BigDecimal getTransactionAmount() {
-        Object value = qrData.get("transactionAmount");
-        if (value instanceof Double) {
-            return BigDecimal.valueOf((Double) value);
-        } else if (value instanceof String) {
-            return new BigDecimal((String) value);
-        } else if (value instanceof BigDecimal) {
-            return (BigDecimal) value;
+    public Map<String, Object> getQrData() {
+        if (qrData.containsKey("transactionAmount")) {
+            qrData.put("transactionAmount", formatAmount(qrData.get("transactionAmount")));
         }
-        return null;
+        return qrData;
+    }
+
+    private String formatAmount(Object value) {
+        BigDecimal amount = new BigDecimal(value.toString());
+        return String.format("%.2f", amount);  // ✅ Ensures two decimal places
     }
 }
 
