@@ -10,7 +10,6 @@ import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.Nationalized;
 
-import java.time.Instant;
 import java.util.Date;
 
 @Getter

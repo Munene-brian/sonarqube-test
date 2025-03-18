@@ -11,9 +11,8 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GenerateQRCodeRequest {
-    // TODO: Make this use a hashmap to make it extensible
     private String requestType; // "GenerateStaticQrCode" or "GenerateDynamicQrCode"
-    private String channelId;
+    private Long channelId;
     private Map<String, Object> qrData; // Flexible structure for static/dynamic QRs
 
     public Map<String, Object> getQrData() {

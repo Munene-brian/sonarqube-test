@@ -10,7 +10,6 @@ import org.hibernate.annotations.Nationalized;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import java.time.Instant;
 import java.util.Date;
 
 @Getter
