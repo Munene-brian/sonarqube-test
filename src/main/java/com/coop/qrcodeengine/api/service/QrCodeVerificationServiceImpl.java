@@ -2,12 +2,13 @@ package com.coop.qrcodeengine.api.service;
 
 import com.coop.qrcodeengine.api.dto.VerifyQRCodeRequest;
 import com.coop.qrcodeengine.api.dto.VerifyQRCodeResponse;
+import com.coop.qrcodeengine.api.entity.QrCodeStorage;
 import com.coop.qrcodeengine.api.entity.QrTlvSubtemplate;
 import com.coop.qrcodeengine.api.entity.QrTlvTemplate;
+import com.coop.qrcodeengine.api.repository.QrCodeStorageRepository;
 import com.coop.qrcodeengine.api.repository.QrFeatureTypeRepository;
 import com.coop.qrcodeengine.api.repository.QrTlvSubtemplateRepository;
 import com.coop.qrcodeengine.api.repository.QrTlvTemplateRepository;
-import com.coop.qrcodeengine.api.utils.CRCUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -25,11 +27,13 @@ public class QrCodeVerificationServiceImpl implements QrCodeVerificationService 
     private final QrTlvTemplateRepository qrTlvTemplateRepository;
     private final QrTlvSubtemplateRepository qrTlvSubtemplateRepository;
     private final QrFeatureTypeRepository qrFeatureTypeRepository;
+    private final QrCodeStorageRepository qrCodeStorageRepository;
 
-    public QrCodeVerificationServiceImpl(QrTlvTemplateRepository qrTlvTemplateRepository, QrTlvSubtemplateRepository qrTlvSubtemplateRepository, QrFeatureTypeRepository qrFeatureTypeRepository) {
+    public QrCodeVerificationServiceImpl(QrTlvTemplateRepository qrTlvTemplateRepository, QrTlvSubtemplateRepository qrTlvSubtemplateRepository, QrFeatureTypeRepository qrFeatureTypeRepository, QrCodeStorageRepository qrCodeStorageRepository) {
         this.qrTlvTemplateRepository = qrTlvTemplateRepository;
         this.qrTlvSubtemplateRepository = qrTlvSubtemplateRepository;
         this.qrFeatureTypeRepository = qrFeatureTypeRepository;
+        this.qrCodeStorageRepository = qrCodeStorageRepository;
     }
 //    private final QrCodeRepository qrCodeRepository; // If you need to verify merchants/accounts
 
@@ -186,37 +190,29 @@ private Map<String, String> extractPaymentRouting(Map<Integer, Object> parsedQrD
     }
 
     // Helper Method to Verify Checksum - Calculate checksum again and compare
-    public boolean verifyChecksum(String userProvidedQrData) {
-        // Extract QR Code data without checksum
-        String qrDataWithoutChecksum = userProvidedQrData.substring(0, userProvidedQrData.length() - 8);
-
-        // Compute checksum again
-        String computedChecksum = CRCUtils.computeCRC(qrDataWithoutChecksum);
-
-        // Extract user-provided checksum
-        String userChecksum = userProvidedQrData.substring(userProvidedQrData.length() - 4);
-
-        return computedChecksum.equals(userChecksum);
-    }
-
-    // TODO: Ask Francis preferred approach
-    // Helper Method to Verify Checksum - Checking checksum in DB
-//    private boolean verifyChecksum(String qrCodeData) {
-//        // Extract last 4 characters from user-provided QR data
-//        String userChecksum = qrCodeData.substring(qrCodeData.length() - 4);
+//    public boolean verifyChecksum(String userProvidedQrData) {
+//        // Extract QR Code data without checksum
+//        String qrDataWithoutChecksum = userProvidedQrData.substring(0, userProvidedQrData.length() - 8);
 //
-//        // Retrieve stored checksum from DB
-//        Optional<QrCodeStorage> storedQrCode = qrCodeStorageRepository.findByQrCodeString(qrCodeData);
-//        // QR Code not found
-//        return storedQrCode.filter(qrCodeStorage -> userChecksum.equals(qrCodeStorage.getChecksumValue())).isPresent();
+//        // Compute checksum again
+//        String computedChecksum = CRCUtils.computeCRC(qrDataWithoutChecksum);
 //
+//        // Extract user-provided checksum
+//        String userChecksum = userProvidedQrData.substring(userProvidedQrData.length() - 4);
+//
+//        return computedChecksum.equals(userChecksum);
 //    }
 
-    // Helper Method to Validate Merchant
-    private boolean isValidMerchant(String merchantAccount) {
-//        return qrCodeRepository.existsByMerchantAccount(merchantAccount); // Validate from DB
-        // TODO: Check if can be implemented using data from DB
-        return true;
+    // Helper Method to Verify Checksum - Checking checksum in DB
+    private boolean verifyChecksum(String qrCodeData) {
+        // Extract last 4 characters from user-provided QR data
+        String userChecksum = qrCodeData.substring(qrCodeData.length() - 4);
+
+        // Retrieve stored checksum from DB
+        Optional<QrCodeStorage> storedQrCode = qrCodeStorageRepository.findByQrCodeString(qrCodeData);
+        // QR Code not found
+        return storedQrCode.filter(qrCodeStorage -> userChecksum.equals(qrCodeStorage.getChecksumValue())).isPresent();
+
     }
 
     // Helper Method to Build Error Response
@@ -225,7 +221,7 @@ private Map<String, String> extractPaymentRouting(Map<Integer, Object> parsedQrD
                 .requestMessageId(request.getRequestMessageId())
                 .requestDateTime(Instant.now())
                 .responseCode("400")
-                .responseDescription("Invalid QR Code - Checksum Mismatch")
+                .responseDescription("Invalid QR Code")
                 .validationStatus("Invalid")
                 .build();
     }

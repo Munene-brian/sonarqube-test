@@ -22,7 +22,6 @@ public class QrCodeStorage {
     private String qrCodeId;
 
     @NotNull
-    @Lob
     @Column(name = "QR_CODE_STRING", nullable = false)
     private String qrCodeString;
 

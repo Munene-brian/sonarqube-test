@@ -11,10 +11,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.time.Instant;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -119,6 +117,7 @@ public class QrCodeServiceImpl implements QrCodeService {
         qrCodeStorage.setIsValid('1');
         qrCodeStorage.setStatus("ACTIVE");
         qrCodeStorage.setChecksumValue(qrData.substring(qrData.length() - 4));
+        qrCodeStorage.setCreatedAt(Date.from(Instant.now()));
         qrCodeStorageRepository.save(qrCodeStorage);
 
         // TODO: Fully implement saving logic for qr code details, might be easier after read and verify API
@@ -132,6 +131,7 @@ public class QrCodeServiceImpl implements QrCodeService {
                     detail.setQrCodeType(isDynamic ? "DynamicQR" : "StaticQR");
                     detail.setChannelId(request.getChannelId());
                     detail.setFieldValue(entry.getValue().toString()); // Field Value
+                    detail.setCreatedAt(Date.from(Instant.now()));
 
                     return detail;
                 })
