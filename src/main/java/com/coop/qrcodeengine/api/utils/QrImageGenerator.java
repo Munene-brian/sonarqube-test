@@ -18,8 +18,7 @@ import java.util.Map;
 
 public class QrImageGenerator {
     private static final int QR_SIZE = 400;
-    private static final double QUIET_ZONE = 2.9;
-    //private static final int QUIET_ZONE = 4;
+    private static final double QUIET_ZONE = 1.5;
     private static final int FINDER_PATTERN_SIZE = 7;
 
     private static final Color DARK_GREEN = new Color(0x00513B);
@@ -68,9 +67,16 @@ public class QrImageGenerator {
 
         int inputWidth = input.getWidth();
         int inputHeight = input.getHeight();
-        int qrWidth = (int) (inputWidth + (QrImageGenerator.QUIET_ZONE * 2));
-        int qrHeight = (int) (inputHeight + (QrImageGenerator.QUIET_ZONE * 2));
-        int multiple = Math.min(QrImageGenerator.QR_SIZE / qrWidth, QrImageGenerator.QR_SIZE / qrHeight);
+        // QR width and height including quiet zone
+        int qrWidth = inputWidth + (int)(QUIET_ZONE * 2);
+        int qrHeight = inputHeight + (int)(QUIET_ZONE * 2);
+//        int qrWidth = (int) (inputWidth + QrImageGenerator.QUIET_ZONE * 2);
+//        int qrHeight = (int) (inputHeight + QrImageGenerator.QUIET_ZONE * 2);
+//        int multiple = Math.min(QrImageGenerator.QR_SIZE / qrWidth, QrImageGenerator.QR_SIZE / qrHeight);
+        // 1. Compute the correct scaling factor (excluding QUIET_ZONE)
+        int multiple = Math.min(QrImageGenerator.QR_SIZE / qrWidth,
+                QrImageGenerator.QR_SIZE / qrHeight);
+        // 2. Compute correct padding (ensuring QUIET_ZONE is not applied twice)
         int leftPadding = (QrImageGenerator.QR_SIZE - (inputWidth * multiple)) / 2;
         int topPadding = (QrImageGenerator.QR_SIZE - (inputHeight * multiple)) / 2;
 

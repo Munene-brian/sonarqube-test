@@ -22,11 +22,11 @@ public class QrTlvTemplateId implements java.io.Serializable {
 
     @NotNull
     @Column(name = "TEMPLATE_ID", nullable = false)
-    private Long templateId;
+    private Integer templateId;
 
     @NotNull
     @Column(name = "CHANNEL_ID", nullable = false)
-    private Long channelId;
+    private Integer channelId;
 
     @Override
     public boolean equals(Object o) {

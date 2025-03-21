@@ -118,6 +118,7 @@ public class QrCodeServiceImpl implements QrCodeService {
         qrCodeStorage.setChannelId(request.getChannelId());
         qrCodeStorage.setIsValid('1');
         qrCodeStorage.setStatus("ACTIVE");
+        qrCodeStorage.setChecksumValue(qrData.substring(qrData.length() - 4));
         qrCodeStorageRepository.save(qrCodeStorage);
 
         // TODO: Fully implement saving logic for qr code details, might be easier after read and verify API

@@ -38,4 +38,7 @@ public class QrLogoTemplate {
     @Column(name = "CREATED_AT")
     private Date createdAt;
 
+    @Column(name = "UPDATED_AT")
+    private Date updatedAt;
+
 }

@@ -9,6 +9,7 @@ import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.Nationalized;
 
 import java.time.Instant;
+import java.util.Date;
 
 @Getter
 @Setter
@@ -56,14 +57,10 @@ public class QrCodeRequestsLog {
     @Column(name = "STATUS_DESCRIPTION", length = 220)
     private String statusDescription;
 
-    @Size(max = 50)
-    @Nationalized
-    @Column(name = "CREATED_BY", length = 50)
-    private String createdBy;
+    @Column(name = "CREATED_AT")
+    private Date createdAt;
 
-    @Size(max = 50)
-    @Nationalized
-    @Column(name = "UPDATED_BY", length = 50)
-    private String updatedBy;
+    @Column(name = "UPDATED_AT")
+    private Date updatedAt;
 
 }

@@ -34,9 +34,15 @@ public class QrCodeStorage {
     @Column(name = "CHANNEL_ID", nullable = false)
     private Long channelId;
 
+    @Column(name = "CHECKSUM_VALUE", length = 50) // ✅ Added checksum column
+    private String checksumValue;
+
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "CREATED_AT")
     private Date createdAt;
+
+    @Column(name = "UPDATED_AT")
+    private Date updatedAt;
 
     @ColumnDefault("'0'")
     @Column(name = "IS_VALID")

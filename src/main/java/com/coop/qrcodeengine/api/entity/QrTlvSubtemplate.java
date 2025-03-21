@@ -18,10 +18,8 @@ import java.util.Date;
 @Table(name = "QR_TLV_SUBTEMPLATE", schema = "MA")
 public class QrTlvSubtemplate {
     @Id
-//    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "QR_TLV_SUBTEMPLATE_id_gen")
-//    @SequenceGenerator(name = "QR_TLV_SUBTEMPLATE_id_gen", sequenceName = "ISEQ$$_84126", allocationSize = 1)
     @Column(name = "SUB_TAG_SEQUENCE", nullable = false)
-    private Long id;
+    private Integer id;
 
     @NotNull
     @Column(name = "SUB_TAG_ID", nullable = false)
@@ -35,6 +33,9 @@ public class QrTlvSubtemplate {
     })
     @OnDelete(action = OnDeleteAction.CASCADE)
     private QrTlvTemplate qrTlvTemplate;
+
+    @Column(name = "PARENT_SUB_TAG_ID", insertable = false, updatable = false)
+    private Integer parentSubTagId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.CASCADE)
@@ -72,6 +73,15 @@ public class QrTlvSubtemplate {
     @ColumnDefault("'0'")
     @Column(name = "REQUIRED")
     private Character required;
+
+    @ColumnDefault("'0'")
+    @Column(name = "VERIFY_JSON", length = 1)
+    private Character verifyJson;
+
+    @ColumnDefault("'0'")
+    @Column(name = "HAS_CHILD", length = 1)
+    private Character hasChild;
+
 
     @Size(max = 1500)
     @Nationalized

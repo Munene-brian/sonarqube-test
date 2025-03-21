@@ -64,6 +64,14 @@ public class QrTlvTemplate {
     @Column(name = "REQUIRED")
     private Character required;
 
+    @ColumnDefault("'0'")
+    @Column(name = "VERIFY_JSON", length = 1)
+    private Character verifyJson;
+
+    @ColumnDefault("'0'")
+    @Column(name = "HAS_CHILD", length = 1)
+    private Character hasChild;
+
     @Size(max = 1500)
     @Nationalized
     @Column(name = "USAGE", length = 1500)

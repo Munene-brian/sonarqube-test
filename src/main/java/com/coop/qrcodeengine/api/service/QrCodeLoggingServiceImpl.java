@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -34,6 +35,7 @@ public class QrCodeLoggingServiceImpl implements QrCodeLoggingService {
             requestLog.setRequestData(requestJson);
             requestLog.setRequestTimestamp(Instant.now());
             requestLog.setStatus("PENDING");
+            requestLog.setCreatedAt(Date.from(Instant.now()));
             requestLog.setStatusDescription("Request received, awaiting processing");
 
             qrCodeRequestsLogRepository.save(requestLog);

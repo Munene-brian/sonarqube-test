@@ -50,7 +50,7 @@ public class QrCodeBuilder {
 
         return qrDataString.toString();
     }
-
+    //TODO: Add a zero-width space to identify nested tags
     private String buildNestedTags(List<QrTlvSubtemplate> subTemplates, Map<String, Object> qrData,
                                    Map<Integer, List<QrTlvSubtemplate>> subTemplateMap) {
         if (subTemplates == null || subTemplates.isEmpty()) {

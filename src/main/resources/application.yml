@@ -29,6 +29,7 @@ spring:
     database-platform: org.hibernate.dialect.OracleDialect
     hibernate:
       ddl-auto: validate
+    show-sql: true
 
 qr:
   config:
