@@ -1,179 +1,154 @@
 package com.coop.qrcodeengine.api.service;
 
-import com.coop.qrcodeengine.api.config.QrConfigProperties;
 import com.coop.qrcodeengine.api.dto.GenerateQRCodeRequest;
 import com.coop.qrcodeengine.api.dto.GenerateQRCodeResponse;
-import com.coop.qrcodeengine.api.entity.QrCodeDetails;
-import com.coop.qrcodeengine.api.entity.StaticQrCodeTemplate;
+import com.coop.qrcodeengine.api.entity.*;
 import com.coop.qrcodeengine.api.exception.QrCodeGenerationException;
-import com.coop.qrcodeengine.api.repository.QrCodeDetailsRepository;
-import com.coop.qrcodeengine.api.repository.StaticQrCodeTemplateRepository;
-import com.coop.qrcodeengine.api.utils.CRCUtils;
-import com.coop.qrcodeengine.api.utils.QrCodeGenerator;
+import com.coop.qrcodeengine.api.repository.*;
+import com.coop.qrcodeengine.api.utils.QrCodeBuilder;
+import com.coop.qrcodeengine.api.utils.QrImageGenerator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class QrCodeServiceImpl implements QrCodeService {
     private static final Logger LOGGER = LogManager.getLogger(QrCodeServiceImpl.class);
 
-    private final StaticQrCodeTemplateRepository staticQrCodeTemplateRepository;
-    private final QrCodeDetailsRepository qrCodeDetailsRepository;
     private final QrCodeLoggingService qrCodeLoggingService;
+    private final QrTlvTemplateRepository qrTlvTemplateRepository;
+    private final QrCodeBuilder qrCodeBuilder;
+    private final QrLogoTemplateRepository qrLogoTemplateRepository;
+    private final QrCodeStorageRepository qrCodeStorageRepository;
+    private final QrCodeDetailsRepository qrCodeDetailsRepository;
 
-    private final QrConfigProperties qrConfig;
-
-    public QrCodeServiceImpl(StaticQrCodeTemplateRepository staticQrCodeTemplateRepository, QrCodeDetailsRepository qrCodeDetailsRepository, QrCodeLoggingService qrCodeLoggingService, QrConfigProperties qrConfig) {
-        this.staticQrCodeTemplateRepository = staticQrCodeTemplateRepository;
-        this.qrCodeDetailsRepository = qrCodeDetailsRepository;
+    public QrCodeServiceImpl(QrCodeLoggingService qrCodeLoggingService,
+                             QrTlvTemplateRepository qrTlvTemplateRepository,
+                             QrCodeBuilder qrCodeBuilder,
+                             QrLogoTemplateRepository qrLogoTemplateRepository, QrCodeStorageRepository qrCodeStorageRepository, QrCodeDetailsRepository qrCodeDetailsRepository) {
         this.qrCodeLoggingService = qrCodeLoggingService;
-        this.qrConfig = qrConfig;
+        this.qrTlvTemplateRepository = qrTlvTemplateRepository;
+        this.qrCodeBuilder = qrCodeBuilder;
+        this.qrLogoTemplateRepository = qrLogoTemplateRepository;
+        this.qrCodeStorageRepository = qrCodeStorageRepository;
+        this.qrCodeDetailsRepository = qrCodeDetailsRepository;
     }
 
+    @Override
     public GenerateQRCodeResponse generateStaticQrCode(GenerateQRCodeRequest qrCodeRequest) {
-        String requestId = UUID.randomUUID().toString(); // Generate unique request ID
+        return generateQrCode(qrCodeRequest, false);
+    }
 
-        // 1️⃣ Log the request at the start (PENDING)
-        qrCodeLoggingService.logRequest(requestId, qrCodeRequest, "GenerateStaticQrCode");
+    @Override
+    public GenerateQRCodeResponse generateDynamicQrCode(GenerateQRCodeRequest qrCodeRequest) {
+        return generateQrCode(qrCodeRequest, true);
+    }
+
+    private GenerateQRCodeResponse generateQrCode(GenerateQRCodeRequest qrCodeRequest, boolean isDynamic) {
+        String requestId = UUID.randomUUID().toString();
+        qrCodeLoggingService.logRequest(requestId, qrCodeRequest, isDynamic ? "GenerateDynamicQrCode" : "GenerateStaticQrCode");
 
         try {
-            LOGGER.info("Fetching static QR code template from database...");
-
-            // 2️⃣ Fetch static QR template from DB
-            List<StaticQrCodeTemplate> qrTemplate = staticQrCodeTemplateRepository.findAll();
-            if (qrTemplate.isEmpty()) {
-                throw new RuntimeException("No static QR Code template found in database");
+            // Fetch TLV templates for the channel and template type
+            // Fetch TLV templates based on request type
+            List<QrTlvTemplate> qrTemplates = isDynamic
+                    ? qrTlvTemplateRepository.findByIsDynamic('1')
+                    : qrTlvTemplateRepository.findByIsStatic('1');
+            if (qrTemplates.isEmpty()) {
+                throw new RuntimeException("No QR Code template found in database");
             }
-            LOGGER.info("Generating static QR code for {}", qrCodeRequest.getMerchantName());
 
-            // 3️⃣ Construct QR Code Data
-            String qrData = buildQRCodeData(qrTemplate, qrCodeRequest);
+            if (isDynamic) {
+                validateDynamicQrFields(qrCodeRequest.getQrData());
+            }
 
-            // 4️⃣ Generate QR Code Image
-            String format = "PNG";
-            int size = 512;
-            byte[] qrImage = QrCodeGenerator.generateStyledQRCode(qrData, format);
+            LOGGER.info("Generating {} QR Code for {}", isDynamic ? "Dynamic" : "Static", qrCodeRequest.getQrData().get("merchantName"));
+
+            // Build QR Code Data String using QrCodeBuilder
+            String qrData = qrCodeBuilder.buildQRCodeData(qrTemplates, qrCodeRequest.getQrData(), isDynamic);
+
+            // Fetch logo image from DB
+            byte[] logoImage = fetchLogoImage(qrCodeRequest.getChannelId());
+
+            // Generate QR Code Image with Logo
+            byte[] qrImage = QrImageGenerator.generateStyledQRCode(qrData, "PNG", logoImage);
             String base64Qr = Base64.getEncoder().encodeToString(qrImage);
 
-            // 5️⃣ Save QR Code Details
-            saveQrCodeDetails(qrTemplate, qrCodeRequest, qrData, base64Qr);
+            // Save QR Details
+            saveQrCodeDetails(qrCodeRequest, qrData, base64Qr, isDynamic);
 
-            // 5️⃣ Log Request
-//            logQrCodeRequest(qrCodeRequest, qrData);
+            // Create Response Object
+            GenerateQRCodeResponse response = new GenerateQRCodeResponse(base64Qr, "PNG", 400);
 
-            // 6️⃣ Update log after QR is generated (SUCCESS)
-            qrCodeLoggingService.updateLog(requestId, qrData);
+            // ✅ Log the successful response
+            qrCodeLoggingService.updateLog(requestId, response, "SUCCESS", "QR Code generated successfully");
 
-            return new GenerateQRCodeResponse(base64Qr, format, size);
-        }
-        catch (Exception e) {
+            return response;
+        } catch (Exception e) {
             LOGGER.error("Error generating QR Code", e);
+            // ❌ Failed Response
+            GenerateQRCodeResponse errorResponse = new GenerateQRCodeResponse(null, "PNG", 500);
 
-            // 7️⃣ Update log with FAILURE if an error occurs
-            qrCodeLoggingService.updateLog(requestId, "ERROR: " + e.getMessage());
-
+            // ❌ Log the failure in DB
+            qrCodeLoggingService.updateLog(requestId, errorResponse, "FAILED", "QR Code generation failed: " + e.getMessage());
             throw new QrCodeGenerationException("Failed to generate QR Code");
         }
     }
 
-    private String buildQRCodeData(List<StaticQrCodeTemplate> templateList, GenerateQRCodeRequest request) {
-        StringBuilder qrData = new StringBuilder();
+    private byte[] fetchLogoImage(Long channelId) {
+        return qrLogoTemplateRepository.findByChannelId(channelId)
+                .map(QrLogoTemplate::getTemplateImage)
+                .orElseThrow(() -> new RuntimeException("No logo found for Channel ID: " + channelId));
+    }
 
-        // 1️⃣ Sort the template list by tagId (ascending order)
-        templateList.sort(Comparator.comparingInt(StaticQrCodeTemplate::getId));
+    private void saveQrCodeDetails(GenerateQRCodeRequest request, String qrData, String base64QrImage, boolean isDynamic) {
+        LOGGER.info("QR Code saved: {}", qrData);
 
-        for (StaticQrCodeTemplate template : templateList) {
-            String tag = String.format("%02d", template.getId()); // Ensure tag is always 2 digits
-            String value = getValueForTag(template, request);
+        // ✅ 1️⃣ Save Main QR Code Storage
+        QrCodeStorage qrCodeStorage = new QrCodeStorage();
+        qrCodeStorage.setQrCodeId(UUID.randomUUID().toString()); // Generate Unique ID
+        qrCodeStorage.setQrCodeString(qrData);
+        qrCodeStorage.setQrCodeImage(Base64.getDecoder().decode(base64QrImage)); // Convert Base64 to Binary
+        qrCodeStorage.setChannelId(request.getChannelId());
+        qrCodeStorage.setIsValid('1');
+        qrCodeStorage.setStatus("ACTIVE");
+        qrCodeStorage.setChecksumValue(qrData.substring(qrData.length() - 4));
+        qrCodeStorage.setCreatedAt(Date.from(Instant.now()));
+        qrCodeStorageRepository.save(qrCodeStorage);
 
-            // 2️⃣ Handle null values based on 'required' flag
-            if (value == null) {
-                if (!"63".equals(tag) && "1".equals(String.valueOf(template.getRequired()))) // Required but null, except for tag 63
-                {
-                    throw new RuntimeException("Required field with tag " + tag + " is missing from input or database.");
-                } else {
-                    continue; // Skip optional fields if null
-                }
+        // TODO: Fully implement saving logic for qr code details, might be easier after read and verify API
+        // ✅ 3️⃣ Batch Insert QR Code Details (Avoid Per-Loop Inserts)
+        List<QrCodeDetails> qrDetailsList = request.getQrData().entrySet().stream()
+                .map(entry -> {
+                    QrCodeDetailsId qrCodeDetailsId = new QrCodeDetailsId(qrCodeStorage.getQrCodeId(), entry.getKey());
+
+                    QrCodeDetails detail = new QrCodeDetails();
+                    detail.setId(qrCodeDetailsId); // Set Composite Key
+                    detail.setQrCodeType(isDynamic ? "DynamicQR" : "StaticQR");
+                    detail.setChannelId(request.getChannelId());
+                    detail.setFieldValue(entry.getValue().toString()); // Field Value
+                    detail.setCreatedAt(Date.from(Instant.now()));
+
+                    return detail;
+                })
+                .collect(Collectors.toList());
+
+        // Perform a **batch insert** instead of multiple DB calls
+        qrCodeDetailsRepository.saveAll(qrDetailsList);
+
+        LOGGER.info("QR Code Details saved successfully.");
+    }
+
+    private void validateDynamicQrFields(Map<String, Object> qrData) {
+        List<String> requiredFields = List.of("merchantName", "transactionAmount");
+        for (String field : requiredFields) {
+            if (!qrData.containsKey(field) || qrData.get(field) == null) {
+                throw new IllegalArgumentException(field + " is required for Dynamic QR");
             }
-
-            String length = String.format("%02d", value.length());
-            qrData.append(tag).append(length).append(value);
         }
-
-        // 3️⃣ Compute CRC and append at the end
-        String crcValue = CRCUtils.computeCRC(qrData.toString());
-        qrData.append("63").append("04").append(crcValue);
-
-        return qrData.toString();
-
-//        return constructTLVString(templateList, request);
     }
-
-    private String getValueForTag(StaticQrCodeTemplate template, GenerateQRCodeRequest request) {
-        return switch (String.valueOf(template.getId())) {
-            case "59" -> request.getMerchantName(); // Merchant Name
-            case "60" -> request.getMerchantCity(); // Merchant City
-            case "61" -> request.getPostalCode(); // Postal Code
-            case "29" -> buildMerchantAccountInfo(request.getMerchantAccountInformation()); // Merchant Account Info
-            case "52" -> request.getMerchantCategoryCode(); // Merchant Category Code
-            case "82" -> "01" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmm")); // Timestamp
-            default -> template.getContentValue(); // Use DB default value
-        };
-    }
-
-    private String buildMerchantAccountInfo(String merchantAccount) {
-        // Fetch constants from config
-        String qrSubDomain = qrConfig.getKeQrSubDomain(); // ke.go.qr
-
-        // Construct KE QR Sub-Domain TLV
-        String keQrSubDomainTag = "00";
-        String keQrSubDomainLength = String.format("%02d", qrSubDomain.length());
-        String keQrSubDomainTLV = keQrSubDomainTag + keQrSubDomainLength + qrSubDomain;
-
-        // Construct PSP ID TLV
-        String pspIdTag = "11";
-        String pspIdLength = String.format("%02d", merchantAccount.length());
-        String pspIdTLV = pspIdTag + pspIdLength + merchantAccount;
-
-        // Construct Merchant Account Info TLV
-        String merchantAccountTag = "29";
-        String merchantAccountValue = keQrSubDomainTLV + pspIdTLV;
-        String merchantAccountLength = String.format("%02d", merchantAccountValue.length());
-
-        return merchantAccountTag + merchantAccountLength + merchantAccountValue;
-    }
-
-    private void saveQrCodeDetails(List<StaticQrCodeTemplate> qrTemplate, GenerateQRCodeRequest request, String qrData, String base64QrImage) {
-        QrCodeDetails qrCodeDetails = QrCodeDetails.builder()
-                .qrCodeId(UUID.randomUUID().toString()) // ✅ Generate unique ID
-                .qrCodeType("STATIC")
-                .qrCodeVersion("01")
-                .merchantsName(request.getMerchantName())
-                .countryCode(qrTemplate.stream()
-                        .filter(template -> template.getId() == 58)
-                        .map(StaticQrCodeTemplate::getContentValue)
-                        .findFirst()
-                        .orElse(null))
-                .merchantCity(request.getMerchantCity())
-                .postalCode(request.getPostalCode())
-                .merchantAccountInformation(request.getMerchantAccountInformation())
-                .merchantCategoryCode(request.getMerchantCategoryCode())
-                .transactionCurrency("KES")
-                .qrCodeData(qrData)
-                .qrCodeImage(base64QrImage)
-                .checkSumValue(qrData.substring(qrData.length() - 4))
-                .additionalInformation("00")
-                .messageId("null")
-                .creationDate(Date.from(Instant.now()))
-                .build();
-
-        qrCodeDetailsRepository.save(qrCodeDetails);
-    }
-
 }

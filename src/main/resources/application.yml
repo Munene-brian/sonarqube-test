@@ -3,16 +3,25 @@ server:
   servlet:
     context-path: /qrcodeservices
 
+  compression:
+    enabled: true
+    mime-types: application/json
+    min-response-size: 1024
+
 spring:
   application:
     name: QRCODE-ENGINE
 
   # Database Configuration
   datasource:
-    url: jdbc:oracle:thin:@copkdnas-c8-scan:1528/QRCODE
-    username: QR
-    password: Ic$#120H40MxsUcPvINZVIJQ
+    url: jdbc:oracle:thin:@172.16.17.40:1561/MONA
+    username: MA
+    password: wU8n1av8U$#OLtiq0MrtT
     driver-class-name: oracle.jdbc.OracleDriver
+#    url: jdbc:oracle:thin:@copkdnas-c8-scan:1528/QRCODE
+#    username: QR
+#    password: Ic$#120H40MxsUcPvINZVIJQ
+#    driver-class-name: oracle.jdbc.OracleDriver
     hikari:
       auto-commit: true
       maximum-pool-size: 10
@@ -20,6 +29,7 @@ spring:
     database-platform: org.hibernate.dialect.OracleDialect
     hibernate:
       ddl-auto: validate
+    show-sql: true
 
 qr:
   config:

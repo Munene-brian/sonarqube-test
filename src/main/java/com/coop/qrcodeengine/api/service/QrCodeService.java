@@ -5,4 +5,5 @@ import com.coop.qrcodeengine.api.dto.GenerateQRCodeResponse;
 
 public interface QrCodeService {
     GenerateQRCodeResponse generateStaticQrCode(GenerateQRCodeRequest qrCodeRequest) throws Exception;
+    GenerateQRCodeResponse generateDynamicQrCode(GenerateQRCodeRequest qrCodeRequest) throws Exception;
 }

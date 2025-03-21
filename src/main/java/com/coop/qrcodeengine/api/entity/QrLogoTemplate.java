@@ -13,36 +13,32 @@ import java.util.Date;
 @Getter
 @Setter
 @Entity
-@Table(name = "QR_CODE_DETAILS", schema = "MA")
-public class QrCodeDetails {
-
-    @EmbeddedId
-    private QrCodeDetailsId id;
-
-    @Size(max = 50)
-    @Nationalized
-    @Column(name = "QR_CODE_TYPE", length = 50)
-    private String qrCodeType;
+@Table(name = "QR_LOGO_TEMPLATES", schema = "MA")
+public class QrLogoTemplate {
+    @Id
+    @Column(name = "TEMPLATE_ID", nullable = false)
+    private Long id;
 
     @NotNull
     @Column(name = "CHANNEL_ID", nullable = false)
     private Long channelId;
 
-    @Size(max = 1000)
+    @Size(max = 100)
+    @NotNull
     @Nationalized
-    @Column(name = "FIELD_VALUE", length = 1000)
-    private String fieldValue;
+    @Column(name = "TEMPLATE_NAME", nullable = false, length = 100)
+    private String templateName;
+
+    @Lob // Maps BLOB column
+    @NotNull
+    @Column(name = "TEMPLATE_IMAGE", columnDefinition = "BLOB", nullable = false)
+    private byte[] templateImage;
 
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "CREATED_AT")
     private Date createdAt;
 
-    @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "UPDATED_AT")
     private Date updatedAt;
 
-    // Establish Relationship to QrCodeStorage
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "QR_CODE_ID", referencedColumnName = "QR_CODE_ID", insertable = false, updatable = false)
-    private QrCodeStorage qrCodeStorage;
 }
