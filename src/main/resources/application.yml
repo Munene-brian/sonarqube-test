@@ -14,7 +14,7 @@ spring:
 
   # Database Configuration
   datasource:
-    url: jdbc:oracle:thin:@172.16.17.40:1561/MONA
+    url: jdbc:oracle:thin:@copkdresb-scan.co-opbank.co.ke:1561/MONA
     username: MA
     password: wU8n1av8U$#OLtiq0MrtT
     driver-class-name: oracle.jdbc.OracleDriver
