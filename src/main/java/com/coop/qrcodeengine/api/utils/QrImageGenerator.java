@@ -70,8 +70,6 @@ public class QrImageGenerator {
         // QR width and height including quiet zone
         int qrWidth = inputWidth + (int)(QUIET_ZONE * 2);
         int qrHeight = inputHeight + (int)(QUIET_ZONE * 2);
-//        int qrWidth = (int) (inputWidth + QrImageGenerator.QUIET_ZONE * 2);
-//        int qrHeight = (int) (inputHeight + QrImageGenerator.QUIET_ZONE * 2);
 //        int multiple = Math.min(QrImageGenerator.QR_SIZE / qrWidth, QrImageGenerator.QR_SIZE / qrHeight);
         // 1. Compute the correct scaling factor (excluding QUIET_ZONE)
         int multiple = Math.min(QrImageGenerator.QR_SIZE / qrWidth,
