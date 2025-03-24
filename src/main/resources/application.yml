@@ -1,5 +1,5 @@
 server:
-  port: 62000
+  port: 80
   servlet:
     context-path: /qrcodeservices
 
@@ -30,8 +30,4 @@ spring:
     hibernate:
       ddl-auto: validate
     show-sql: true
-
-qr:
-  config:
-    keqr-subdomain: ke.go.qr
 
